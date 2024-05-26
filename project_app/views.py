@@ -22,7 +22,11 @@ def log_in(request):
         user_email=request.POST.get("user_email")
         user_password= request.POST.get("user_password")
         
-        user = authenticate(request, username=user_email, password=user_password)
+        if not User.objects.filter(user_email=user_email).exists():
+            messages.error(request, "Invalid Details!!")
+            return redirect("/login/")
+        
+        user = authenticate(username=user_email, password=user_password)
         
         if user is None:
             messages.error(request, "Invalid Details!!")
@@ -32,7 +36,6 @@ def log_in(request):
             login(request, user)
             return redirect("/index/")
             
-    
     context={'page':"LogIn"}    
     return render(request, "login.html", context)
 
@@ -67,6 +70,7 @@ def register(request):
 
 
 def add_product(request):
+    #fetching the data from form
     if request.method=="POST":
         product_name=request.POST.get("product_name")
         product_price=request.POST.get("product_price")
@@ -74,6 +78,7 @@ def add_product(request):
         product_description=request.POST.get("product_description")
         product_image=request.FILES.get("product_image")
         
+        #saving the data
         Product.objects.create(
             product_name=product_name,
             product_price=product_price,
