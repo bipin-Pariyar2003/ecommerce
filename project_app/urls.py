@@ -25,7 +25,7 @@ urlpatterns = [
     path('login/',log_in, name="log_in"),
     path('logout/', log_out, name="log_out"),
     path('register/',register, name="register"),
-    path('add-product/',add_product, name="add_product"),
-    path("delete-product/<id>/", delete_product, name="delete_product"),
-    path("update-product/<id>/", update_product, name="update_product"),
+    # path('add-product/',add_product, name="add_product"),
+    # path("delete-product/<id>/", delete_product, name="delete_product"),
+    # path("update-product/<id>/", update_product, name="update_product"),
 ]

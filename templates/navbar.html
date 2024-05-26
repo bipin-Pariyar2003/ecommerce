@@ -25,9 +25,18 @@
 
 
         <ul class="navbar-nav ml-auto mb-2 mb-lg-0">
-          <li class="nav-item  me-2">
-            <a class="nav-link active" aria-current="page" href="/#/">{{request.user}}</a>
+
+          {% if request.user.is_authenticated %}
+          <li class="nav-item  me-5">
+            <a class="nav-link active" aria-current="page" href="/index/">{{ request.user.full_name }}</a>
           </li>
+
+          <li class="nav-item  me-2">
+            <a type="button" class="nav-link btn btn-outline-success" aria-current="page" href="/logout/">Logout</a>
+          </li>
+         
+
+          {% else %}
           <li class="nav-item  me-2">
             <a class="nav-link active" aria-current="page" href="/login/">Login</a>
           </li>
@@ -35,10 +44,10 @@
           <li class="nav-item  me-2">
             <a class="nav-link active" aria-current="page" href="/register/">Register</a>
           </li>  
+          
 
-          <li class="nav-item  me-2">
-            <a class="nav-link active" aria-current="page" href="/add-product/">Add Product</a>
-          </li> 
+          {% endif %}
+
         </ul>
         
         <form class="d-flex" role="search">
