@@ -4,13 +4,14 @@ from django.db import models
 
 #User
 class User(models.Model):
-    user_name=models.CharField(max_length=200)
+    full_name=models.CharField(max_length=200)
+    username=models.CharField(max_length=200)
     user_email=models.CharField(max_length=200)
     user_password=models.CharField(max_length=200)
     user_address=models.CharField(max_length=200)
     user_phone=models.IntegerField()
     def __str__(self):
-        return self.user_name
+        return self.full_name
     
 
 #Product

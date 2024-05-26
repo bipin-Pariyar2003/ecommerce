@@ -23,6 +23,7 @@ urlpatterns = [
     path('',index, name="index"),
     path('index/', index, name="index") ,
     path('login/',log_in, name="log_in"),
+    path('logout/', log_out, name="log_out"),
     path('register/',register, name="register"),
     path('add-product/',add_product, name="add_product"),
     path("delete-product/<id>/", delete_product, name="delete_product"),

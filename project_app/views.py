@@ -4,7 +4,7 @@ from .models import *
 from django.contrib import messages
 from django.contrib.auth import login, logout, authenticate
 
-
+#Home page--------------------------------------------------------------------------
 def index(request):
     queryset= Product.objects.all()
     
@@ -16,17 +16,17 @@ def index(request):
     context={'page':"Home", "all_products": queryset}
     return render(request,"index.html", context)
 
-
+#------------------- LOG IN -----------------------------------------------
 def log_in(request):
     if request.method=="POST":
-        user_email=request.POST.get("user_email")
+        username=request.POST.get("username")
         user_password= request.POST.get("user_password")
         
-        if not User.objects.filter(user_email=user_email).exists():
+        if not User.objects.filter(username=username).exists():
             messages.error(request, "Invalid Details!!")
             return redirect("/login/")
         
-        user = authenticate(username=user_email, password=user_password)
+        user = authenticate(username=username, password=user_password)
         
         if user is None:
             messages.error(request, "Invalid Details!!")
@@ -37,11 +37,21 @@ def log_in(request):
             return redirect("/index/")
             
     context={'page':"LogIn"}    
-    return render(request, "login.html", context)
+    return render(request, "login_page.html", context)
+
+#------------------------------------- LOG OUT ---------------------------------------------------------------
+def log_out(request):
+    logout(request, user)
+    redirect('/login/')
+    
+    
+    
+    #---------------------------- REGISTER ----------------------------------------------------------------------
 
 def register(request):
     if request.method=="POST":
-        user_name= request.POST.get("user_name")
+        full_name=request.POST.get("full_name")
+        username= request.POST.get("username")
         user_email= request.POST.get("user_email")
         user_password= request.POST.get("user_password")
         user_address= request.POST.get("user_address")
@@ -53,7 +63,8 @@ def register(request):
             return redirect("/register/")
         
         User.objects.create(
-            user_name=user_name,
+            full_name=full_name,
+            username=username,
             user_email=user_email,
             user_password=user_password,
             user_address=user_address,
@@ -68,7 +79,7 @@ def register(request):
     return render(request, "register.html", context)
 
 
-
+#-------------------------------------- ADD PRODUCT -------------------------------------------------
 def add_product(request):
     #fetching the data from form
     if request.method=="POST":
@@ -93,13 +104,13 @@ def add_product(request):
     context= {'page': "add-product","add_product":queryset}
     return render(request, "add_product.html", context)
 
-
+#---------------------------- DELETE PRODUCT -------------------------------------------------------------
 def delete_product(request, id):
     queryset= Product.objects.get(id=id)
     queryset.delete()
     return redirect("/index/")
 
-
+#-------------------------------- UPDATE PRODUCT    --------------------------------------------------
 def update_product(request, id):
     queryset=Product.objects.get(id=id)
     context={"product": queryset}
