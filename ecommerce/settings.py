@@ -69,6 +69,14 @@ TEMPLATES = [
     },
 ]
 
+AUTH_USER_MODEL='project_app.User'
+
+# settings.py
+AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.ModelBackend',  # Ensure this is included
+)
+
+
 WSGI_APPLICATION = 'ecommerce.wsgi.application'
 
 

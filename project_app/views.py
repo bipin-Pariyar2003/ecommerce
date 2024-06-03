@@ -1,8 +1,7 @@
 from django.shortcuts import *
-from django.http import *
 from .models import *
 from django.contrib import messages
-from django.contrib.auth import login, logout, authenticate
+from django.contrib.auth import login, logout, authenticate, get_user_model
 
 #Home page--------------------------------------------------------------------------
 def index(request):
@@ -16,57 +15,33 @@ def index(request):
     context={'page':"Home", "all_products": queryset}
     return render(request,"index.html", context)
 
-#------------------- LOG IN -----------------------------------------------
-def log_in(request):
-    if request.method=="POST":
-        username=request.POST.get("username")
-        user_password= request.POST.get("user_password")
-        
-        if not User.objects.filter(username=username).exists():
-            messages.error(request, "Invalid Details!!")
-            return redirect("/login/")
-        
-        user = authenticate(username=username, password=user_password)
-        
-        if user is None:
-            messages.error(request, "Invalid Details!!")
-            return redirect("/login/")
-        
-        else:
-            login(request, user)
-            return redirect("/index/")
-            
-    context={'page':"LogIn"}    
-    return render(request, "login_page.html", context)
-
-#------------------------------------- LOG OUT ---------------------------------------------------------------
+#------------------- LOG OUT -----------------------------------------------
 def log_out(request):
     logout(request)
     return redirect('/login/')
     
     
     
-    #---------------------------- REGISTER ----------------------------------------------------------------------
+#--------------------------------------- REGISTER ----------------------------------------------------------------------
+User= get_user_model()
 
 def register(request):
     if request.method=="POST":
-        full_name=request.POST.get("full_name")
         username= request.POST.get("username")
-        user_email= request.POST.get("user_email")
-        user_password= request.POST.get("user_password")
+        email= request.POST.get("email")
+        password= request.POST.get("password")
         user_address= request.POST.get("user_address")
         user_phone= request.POST.get("user_phone")
         
-        user = User.objects.filter(user_email=user_email)
+        user = User.objects.filter(email=email)
         if user.exists():
             messages.info(request, "Email Id already used.")
             return redirect("/register/")
         
-        User.objects.create(
-            full_name=full_name,
+        User.objects.create_user(
             username=username,
-            user_email=user_email,
-            user_password=user_password,
+            email=email,
+            password=password,
             user_address=user_address,
             user_phone=user_phone
         )
@@ -78,6 +53,32 @@ def register(request):
     context={'page':"Register", "register": queryset}
     return render(request, "register.html", context)
 
+#------------------------------------- LOG IN ---------------------------------------------------------------
+
+def log_in(request):
+    if request.method=="POST":
+        email=request.POST.get("email")
+        password= request.POST.get("password")
+        
+        # if not User.objects.filter(email=email).exists():
+        #     messages.error(request, "Invalid Details!!")
+        #     return redirect("/login/")
+        
+        user = authenticate(username=email, password=password)
+        
+        if user is None:
+            messages.error(request, "Invalid Details!!")
+            return redirect("/login/")  
+        
+        else:
+            login(request, user)
+            if user.is_superuser:
+                return redirect("/admin/")
+            else:     
+                return redirect("/index/")
+            
+    context={'page':"LogIn"}    
+    return render(request, "login_page.html", context)
 
 #-------------------------------------- ADD PRODUCT -------------------------------------------------
 # def add_product(request):
