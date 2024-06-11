@@ -51,6 +51,15 @@ class User(AbstractBaseUser, PermissionsMixin):
     
     def __str__(self):
         return self.username
+    
+    
+    #Category
+class Category(models.Model):
+    
+    category_name=models.CharField(max_length=200)
+    category_description=models.CharField(max_length=200)
+    def __str__(self):
+        return self.category_name
 
 #Product
 class Product(models.Model):
@@ -59,15 +68,11 @@ class Product(models.Model):
     product_discount=models.IntegerField()
     product_description=models.CharField(max_length=200)
     product_image=models.ImageField(upload_to="product")
+    
+    category = models.ForeignKey(Category, on_delete=models.CASCADE)
     def __str__(self):
         return self.product_name
 
     
-#Category
-class Category(models.Model):
-    
-    category_name=models.CharField(max_length=200)
-    category_description=models.CharField(max_length=200)
-    def __str__(self):
-        return self.category_name
+
     

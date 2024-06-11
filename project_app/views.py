@@ -12,7 +12,9 @@ def index(request):
     if search:
         queryset= queryset.filter(product_name__icontains = search)
         
-    context={'page':"Home", "all_products": queryset}
+    data = Category.objects.all()
+        
+    context={'page':"Home", "all_products": queryset, 'data':data}
     return render(request,"index.html", context)
 
 #------------------- LOG OUT -----------------------------------------------
@@ -32,11 +34,13 @@ def register(request):
         password= request.POST.get("password")
         user_address= request.POST.get("user_address")
         user_phone= request.POST.get("user_phone")
-        
+        #validations
         user = User.objects.filter(email=email)
         if user.exists():
             messages.info(request, "Email Id already used.")
             return redirect("/register/")
+        # if not password.len()>=6:
+        #     messages.info(request, "Password length should be equal or greater than 6")
         
         User.objects.create_user(
             username=username,
@@ -79,6 +83,21 @@ def log_in(request):
             
     context={'page':"LogIn"}    
     return render(request, "login_page.html", context)
+
+
+#..................................Show Products by Category...................................>
+# def category(request, cname):
+#     #Grab the Category
+#     try:
+#         category = Category.objects.get(category_name= cname)
+#         products= Product.objects.filter(category=category)
+#         return render(request, "category.html",{"products": products, 'category': category})
+#     except:
+#          messages.info(request, "Category doesn't exist!!")
+#          return redirect('index')
+
+
+
 
 #-------------------------------------- ADD PRODUCT -------------------------------------------------
 # def add_product(request):
