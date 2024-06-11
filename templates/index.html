@@ -1,10 +1,24 @@
 {% extends "common_components.html" %}
 {% block start %}
 {% load helper %}
+<style>
+  /* CSS to center the message and reduce its width */
+  #alert-message {
+    width: 50%; /* Adjust the width as needed */
+    margin: 0 auto; /* Center horizontally */
+  }
+  </style>
 
 
 
 <div class="container-fluid">
+                  {% if messages %}
+                    <div id="alert-message" class="alert alert-primary" role="alert">
+                      {% for message in messages %}
+                      {{ message }}
+                      {% endfor %}
+                    </div>
+                    {% endif %}
   <div class="row">
     {% for products in all_products %}
       <div class="col">
@@ -20,9 +34,13 @@
           </div>
           <div class="card-footer text-center">
             <div class="row">
-              <div class="col">
-                <button onclick="" class="btn btn-primary bg-warning text-black">Add to Cart</button>
-              </div>
+                <div class="col">
+                  <form method="POST" action="{% url 'add_to_cart' products.id %}">
+                    {% csrf_token %}
+                    
+                    <button type="submit" class="btn btn-primary bg-warning text-black">Add to Cart</button>
+                </form>
+                </div>
               <div class="col">
                 <button onclick="" class="btn btn-outline-success">&#8360; {{ products.product_price }}</button>
               </div>
@@ -43,6 +61,17 @@
     </tbody>
   </table>
      -->
+     <script>
+      // JavaScript to hide the message after one second
+      window.onload = function() {
+        setTimeout(function() {
+          var alertMessage = document.getElementById('alert-message');
+          if (alertMessage) {
+            alertMessage.style.display = 'none';
+          }
+        }, 1000); // 1000 milliseconds = 1 second
+      };
+      </script>
 
 
 {% endblock %}

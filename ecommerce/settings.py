@@ -69,6 +69,11 @@ TEMPLATES = [
     },
 ]
 
+# settings.py
+
+LOGIN_URL = '/login/'
+
+
 AUTH_USER_MODEL='project_app.User'
 
 # settings.py

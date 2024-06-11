@@ -25,8 +25,12 @@ urlpatterns = [
     path('login/',log_in, name="log_in"),
     path('logout/', log_out, name="log_out"),
     path('register/',register, name="register"),
+    path('add-to-cart/<int:product_id>/', add_to_cart, name='add_to_cart'),
+    path('cart/', view_cart, name='view_cart'),
+    path('remove-from-cart/<int:cart_item_id>/', remove_from_cart, name='remove_from_cart'),
+    path('update-cart-item/<int:item_id>/', update_cart_item, name='update_cart_item'),
+    path('checkout/',checkout, name='checkout'),
+
     # path('category/<str:cname>', category, name="category")
-    # path('add-product/',add_product, name="add_product"),
-    # path("delete-product/<id>/", delete_product, name="delete_product"),
-    # path("update-product/<id>/", update_product, name="update_product"),
+    
 ]

@@ -23,10 +23,11 @@
         </ul>
 
 
-        <ul class="navbar-nav ml-auto mb-2 mb-lg-0">
+        <ul class="navbar-nav ">
           <li class="nav-item ">
-            <a href="#" class="nav-link active"><i class="fa-solid fa-cart-shopping"></i></a>
+            <a href="/cart/" class="nav-link active" aria-current="page"> <i class='bx bx-cart-alt' style="font-size: 1.5em;" ></i> </a>
           </li>
+
 
           {% if request.user.is_authenticated and request.user.is_superuser%}
           <li class="nav-item  me-5">

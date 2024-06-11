@@ -2,6 +2,7 @@ from django.shortcuts import *
 from .models import *
 from django.contrib import messages
 from django.contrib.auth import login, logout, authenticate, get_user_model
+from django.contrib.auth.decorators import login_required
 
 #Home page--------------------------------------------------------------------------
 def index(request):
@@ -84,72 +85,86 @@ def log_in(request):
     context={'page':"LogIn"}    
     return render(request, "login_page.html", context)
 
+#------------------------CART--------------------------------
+#Add to cart
+@login_required
+def add_to_cart(request, product_id):
+    if request.method == "POST":
+        product = get_object_or_404(Product, id=product_id)
+        cart, created = Cart.objects.get_or_create(user=request.user)
+        cart_item, created = CartItem.objects.get_or_create(cart=cart, product=product)
+        if not created:
+            cart_item.quantity += 1
+            cart_item.save()
+        messages.info(request, "Product Added to Cart")
+    return redirect('/index/')
 
-#..................................Show Products by Category...................................>
-# def category(request, cname):
-#     #Grab the Category
-#     try:
-#         category = Category.objects.get(category_name= cname)
-#         products= Product.objects.filter(category=category)
-#         return render(request, "category.html",{"products": products, 'category': category})
-#     except:
-#          messages.info(request, "Category doesn't exist!!")
-#          return redirect('index')
+
+#view cart
+@login_required
+def view_cart(request):
+    cart, created = Cart.objects.get_or_create(user=request.user)
+    cart_items = CartItem.objects.filter(cart=cart)
+    total_price = sum(item.quantity * item.product.product_price for item in cart_items)
+    
+    
+    context = {
+        'cart_items': cart_items, 'total_price': total_price
+    }
+    return render(request, 'view_cart.html', context)
+
+#update cart
+@login_required
+def update_cart_item(request, item_id):
+    if request.method == "POST":
+        cart_item = get_object_or_404(CartItem, id=item_id)
+        new_quantity = int(request.POST.get('quantity'))
+        if new_quantity > 0:
+            cart_item.quantity = new_quantity
+            cart_item.save()
+    return redirect('view_cart')
+
+
+#remove from cart
+@login_required
+def remove_from_cart(request, cart_item_id):
+    cart_item = get_object_or_404(CartItem, id=cart_item_id)
+    cart_item.delete()
+    return redirect('/cart/')
 
 
 
+#--------------------------- CheckOUT-----------------------------------------
+@login_required
+def checkout(request):
+    if request.method == 'GET':
+        # Assuming you have a UserProfile model associated with each user
+        user_profile = request.user.userprofile
 
-#-------------------------------------- ADD PRODUCT -------------------------------------------------
-# def add_product(request):
-#     #fetching the data from form
-#     if request.method=="POST":
-#         product_name=request.POST.get("product_name")
-#         product_price=request.POST.get("product_price")
-#         product_discount=request.POST.get("product_discount")
-#         product_description=request.POST.get("product_description")
-#         product_image=request.FILES.get("product_image")
-        
-#         #saving the data
-#         Product.objects.create(
-#             product_name=product_name,
-#             product_price=product_price,
-#             product_discount=product_discount,
-#             product_description=product_description,
-#             product_image=product_image
-#         )
+        # Assuming UserProfile model has fields like address, phone_number, etc.
+        context = {
+            'user_profile': user_profile,
+            'total_price': calculate_total_price(request.user)
+        }
+        return render(request, 'checkout.html', context)
+    
+    elif request.method == 'POST':
+        # Logic to confirm order, update database, etc.
+        # This could involve creating an Order model, updating product quantities, etc.
+        # Once the order is confirmed, you may want to clear the user's cart
+        clear_cart(request.user)
+        return redirect('order_confirmation')  # Redirect to a page confirming the order
+    
+#calculate total price
+def calculate_total_price(user):
+    # Logic to calculate total price of items in user's cart
+    total_price = 0
+    cart_items = user.cart.cartitem_set.all()
+    for item in cart_items:
+        total_price += item.quantity * item.product.product_price
+    return total_price
 
-#         return redirect("/index/")
-        
-#     queryset=Product.objects.all()
-#     context= {'page': "add-product","add_product":queryset}
-#     return render(request, "add_product.html", context)
-
-# #---------------------------- DELETE PRODUCT -------------------------------------------------------------
-# def delete_product(request, id):
-#     queryset= Product.objects.get(id=id)
-#     queryset.delete()
-#     return redirect("/index/")
-
-# #-------------------------------- UPDATE PRODUCT    --------------------------------------------------
-# def update_product(request, id):
-#     queryset=Product.objects.get(id=id)
-#     context={"product": queryset}
-#     if request.method=="POST":
-#         product_name=request.POST.get("product_name")
-#         product_price=request.POST.get("product_price")
-#         product_discount=request.POST.get("product_discount")
-#         product_description=request.POST.get("product_description")
-#         product_image=request.FILES.get("product_image")
-        
-#         queryset.product_name=product_name
-#         queryset.product_price=product_price
-#         queryset.product_discount=product_discount
-#         queryset.product_description=product_description
-        
-#         if product_image:
-#             queryset.product_image=product_image
-        
-#         queryset.save()
-#         return redirect("/index/")
-
-#     return render(request, "update_product.html", context)
+#clear cart
+def clear_cart(user):
+    # Logic to clear user's cart after placing an order
+    user.cart.cartitem_set.all().delete()
