@@ -1,0 +1,49 @@
+<!-- templates/checkout.html -->
+{% extends "common_components.html" %}
+
+{% block start %}
+{% load multiply %}
+
+<h2 style="margin-bottom: 40px; margin-top: 20px;" class="text-center">Checkout</h2>
+
+<form method="POST" action="/thankyou/">
+    {% csrf_token %}
+    <div class="container">
+        <div class="row">
+            <div class="col-md-6">
+                <h4>Delivery Address</h4>
+                <p><strong>Address:</strong> {{ address }}</p>
+                <p><strong>Phone Number:</strong> {{ phone_number }}</p>
+            </div>
+            <div class="col-md-6">
+                <h4>Order Summary</h4>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Quantity</th>
+                            <th>Price</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in cart_items %}
+                            <tr>
+                                <td>{{ item.product.product_name }}</td>
+                                <td>{{ item.quantity }}</td>
+                                <td>&#8360; {{ item.product.product_price }}</td>
+                                <td>&#8360; {{ item.quantity|multiply:item.product.product_price }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <p style="font-weight: bolder; font-size:x-large">Total Price: Rs {{ total_price }}</p>
+            </div>
+        </div>
+        <div class="text-center mt-4">
+            <button type="submit" class="btn btn-success">Place Order</button>
+        </div>
+    </div>
+</form>
+
+{% endblock %}

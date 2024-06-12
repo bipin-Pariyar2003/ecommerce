@@ -30,6 +30,7 @@ urlpatterns = [
     path('remove-from-cart/<int:cart_item_id>/', remove_from_cart, name='remove_from_cart'),
     path('update-cart-item/<int:item_id>/', update_cart_item, name='update_cart_item'),
     path('checkout/',checkout, name='checkout'),
+    path('thankyou/', thankyou, name="thankyou")
 
     # path('category/<str:cname>', category, name="category")
     

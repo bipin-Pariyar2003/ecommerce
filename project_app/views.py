@@ -4,9 +4,11 @@ from django.contrib import messages
 from django.contrib.auth import login, logout, authenticate, get_user_model
 from django.contrib.auth.decorators import login_required
 
+
 #Home page--------------------------------------------------------------------------
 def index(request):
     queryset= Product.objects.all()
+    print("-------query set", queryset)
     
     #for search operation
     search = request.GET.get("search")
@@ -92,7 +94,7 @@ def add_to_cart(request, product_id):
     if request.method == "POST":
         product = get_object_or_404(Product, id=product_id)
         cart, created = Cart.objects.get_or_create(user=request.user)
-        cart_item, created = CartItem.objects.get_or_create(cart=cart, product=product)
+        cart_item, created = CartItem.objects.get_or_create(cart=cart, product=product, user=request.user)
         if not created:
             cart_item.quantity += 1
             cart_item.save()
@@ -132,39 +134,98 @@ def remove_from_cart(request, cart_item_id):
     cart_item.delete()
     return redirect('/cart/')
 
-
-
-#--------------------------- CheckOUT-----------------------------------------
+#----------------------check out----------------------------------------
 @login_required
-def checkout(request):
-    if request.method == 'GET':
-        # Assuming you have a UserProfile model associated with each user
-        user_profile = request.user.userprofile
-
-        # Assuming UserProfile model has fields like address, phone_number, etc.
-        context = {
-            'user_profile': user_profile,
-            'total_price': calculate_total_price(request.user)
-        }
-        return render(request, 'checkout.html', context)
-    
-    elif request.method == 'POST':
-        # Logic to confirm order, update database, etc.
-        # This could involve creating an Order model, updating product quantities, etc.
-        # Once the order is confirmed, you may want to clear the user's cart
-        clear_cart(request.user)
-        return redirect('order_confirmation')  # Redirect to a page confirming the order
-    
-#calculate total price
-def calculate_total_price(user):
-    # Logic to calculate total price of items in user's cart
-    total_price = 0
-    cart_items = user.cart.cartitem_set.all()
-    for item in cart_items:
-        total_price += item.quantity * item.product.product_price
+def calculate_total_price(cart_items):
+    total_price = sum(item.quantity * item.product.product_price for item in cart_items)
     return total_price
 
-#clear cart
-def clear_cart(user):
-    # Logic to clear user's cart after placing an order
-    user.cart.cartitem_set.all().delete()
+@login_required
+def checkout(request):
+    print("REQ", request)
+    print("USER", request.user)
+    user = request.user  # Retrieve the user from the request
+
+
+    if request.method == 'POST':
+        # Logic to confirm order and create an Order instance
+        # cart_items = CartItem.objects.filter(cart__user=user)
+        cart_items = CartItem.objects.prefetch_related('cart__user').filter(cart__user=user)
+        print("CART ITEMS", cart_items)
+        total_price = calculate_total_price(cart_items)
+
+        # Create an Order instance
+        order = Order.objects.create(user=user, total_price=total_price)
+        print("ORDER", order)
+        
+
+        # Add cart items to the order
+        order.items.add(*cart_items)
+
+        # Clear the user's cart
+        cart_items.delete()
+
+        messages.success(request, "Order placed successfully!")
+        return redirect('order_confirmation')
+
+    # elif request.method == 'GET':
+    #     # Fetch the user's address and phone number from the User model
+    #     address = user.user_address
+    #     phone_number = user.user_phone
+
+    #     # Fetch the items in the user's cart
+    #     cart_items = CartItem.objects.filter(cart__user=user)
+    #     print("CART ITEMS", cart_items)
+
+    #     # Calculate the total price of items in the user's cart
+    #     total_price = calculate_total_price(cart_items)
+    #     print("TOTAL PRICES", total_price)
+        
+
+    #     context = {
+    #         'address': address,
+    #         'phone_number': phone_number,
+    #         'cart_items': cart_items,
+    #         'total_price': total_price,
+    #     }
+    #     print('CONTEXT', context)
+    #     return render(request, 'checkout.html', context)
+    
+    elif request.method == 'GET':
+        # Pre-fetch user data
+        cart_items = CartItem.objects.prefetch_related('cart__user').filter(cart__user=user)
+        print("CART ITEMS", cart_items)
+
+        # Access user object for each item (optional, not needed for rendering)
+        # for item in cart_items:
+        #     user = item.cart.user
+
+        # Fetch the user's address and phone number from the User model
+        address = user.user_address
+        print("address----", address)
+        phone_number = user.user_phone
+        print("phone----", phone_number)
+
+        # Calculate the total price of items in the user's cart
+        # total_price = calculate_total_price(cart_items)
+        total_price = sum(item.quantity * item.product.product_price for item in cart_items)
+        
+        # print("totalPrice----", total_price)
+
+        # Build context for template rendering
+        context = {
+            'address': address,
+            'phone_number': phone_number,
+            'cart_items': cart_items,
+            'total_price': total_price,
+        }
+        print("CONTEXT", context)
+
+        # Render the checkout template
+        return render(request, 'checkout.html', context)
+
+
+
+#Thankyou
+def thankyou(request):
+    return render(request, "thankyou.html", {})
