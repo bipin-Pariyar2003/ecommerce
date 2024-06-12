@@ -3,7 +3,7 @@ from .models import *
 from django.contrib import messages
 from django.contrib.auth import login, logout, authenticate, get_user_model
 from django.contrib.auth.decorators import login_required
-
+from django.contrib.admin.views.decorators import staff_member_required
 
 #Home page--------------------------------------------------------------------------
 def index(request):
@@ -177,8 +177,31 @@ def checkout(request):
         return render(request, 'checkout.html', context)
 
 
-
-
 #Thankyou
 def thankyou(request):
     return render(request, "thankyou.html", {})
+
+
+@login_required
+def view_orders(request):
+    orders = Order.objects.filter(user=request.user)
+    order_details = []
+    for order in orders:
+        items = order.items.all()  # Get all items associated with the order
+        item_names = [item.product.product_name for item in items]  # Extract item names
+        order_details.append({'order': order, 'item_names': item_names})
+    return render(request, 'view_orders.html', {'order_details': order_details})
+
+
+@staff_member_required
+def update_order_status(request, order_id):
+    order = get_object_or_404(Order, id=order_id)
+
+    if request.method == 'POST':
+        new_status = request.POST.get('status')
+        order.status = new_status
+        order.save()
+        messages.success(request, "Order status updated successfully!")
+        return redirect('order_detail', order_id=order_id)
+
+    return render(request, 'update_order_status.html', {'order': order})

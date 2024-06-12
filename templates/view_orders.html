@@ -1,0 +1,36 @@
+{% extends "common_components.html" %}
+
+{% block start %}
+<h2>Your Orders</h2>
+
+{% if order_details %}
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Order ID</th>
+                <th>Total Price</th>
+                <th>Status</th>
+                <th>Items</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for order_detail in order_details %}
+            <tr>
+                <td>{{ order_detail.order.id }}</td>
+                <td>{{ order_detail.order.total_price }}</td>
+                <td>{{ order_detail.order.status }}</td>
+                <td>
+                    <ul>
+                    {% for item_name in order_detail.item_names %}
+                        <li>{{ item_name }}</li>
+                    {% endfor %}
+                    </ul>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p>No orders found.</p>
+{% endif %}
+{% endblock %}
