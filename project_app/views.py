@@ -142,22 +142,14 @@ def calculate_total_price(cart_items):
 
 @login_required
 def checkout(request):
-    print("REQ", request)
-    print("USER", request.user)
-    user = request.user  # Retrieve the user from the request
-
+    user = request.user  # Retrieve the current user from the request
 
     if request.method == 'POST':
-        # Logic to confirm order and create an Order instance
-        # cart_items = CartItem.objects.filter(cart__user=user)
-        cart_items = CartItem.objects.prefetch_related('cart__user').filter(cart__user=user)
-        print("CART ITEMS", cart_items)
-        total_price = calculate_total_price(cart_items)
+        cart_items = CartItem.objects.filter(cart__user=user)
+        total_price = sum(item.quantity * item.product.product_price for item in cart_items)
 
-        # Create an Order instance
+        # Create the order
         order = Order.objects.create(user=user, total_price=total_price)
-        print("ORDER", order)
-        
 
         # Add cart items to the order
         order.items.add(*cart_items)
@@ -166,63 +158,24 @@ def checkout(request):
         cart_items.delete()
 
         messages.success(request, "Order placed successfully!")
-        return redirect('order_confirmation')
+        return redirect('thankyou')
 
-    # elif request.method == 'GET':
-    #     # Fetch the user's address and phone number from the User model
-    #     address = user.user_address
-    #     phone_number = user.user_phone
-
-    #     # Fetch the items in the user's cart
-    #     cart_items = CartItem.objects.filter(cart__user=user)
-    #     print("CART ITEMS", cart_items)
-
-    #     # Calculate the total price of items in the user's cart
-    #     total_price = calculate_total_price(cart_items)
-    #     print("TOTAL PRICES", total_price)
-        
-
-    #     context = {
-    #         'address': address,
-    #         'phone_number': phone_number,
-    #         'cart_items': cart_items,
-    #         'total_price': total_price,
-    #     }
-    #     print('CONTEXT', context)
-    #     return render(request, 'checkout.html', context)
-    
     elif request.method == 'GET':
-        # Pre-fetch user data
-        cart_items = CartItem.objects.prefetch_related('cart__user').filter(cart__user=user)
-        print("CART ITEMS", cart_items)
-
-        # Access user object for each item (optional, not needed for rendering)
-        # for item in cart_items:
-        #     user = item.cart.user
-
-        # Fetch the user's address and phone number from the User model
-        address = user.user_address
-        print("address----", address)
-        phone_number = user.user_phone
-        print("phone----", phone_number)
-
-        # Calculate the total price of items in the user's cart
-        # total_price = calculate_total_price(cart_items)
-        total_price = sum(item.quantity * item.product.product_price for item in cart_items)
         
-        # print("totalPrice----", total_price)
+        address = user.user_address
+        phone_number = user.user_phone
+        cart_items = CartItem.objects.filter(cart__user=user)
+        total_price = sum(item.quantity * item.product.product_price for item in cart_items)
 
-        # Build context for template rendering
         context = {
             'address': address,
             'phone_number': phone_number,
             'cart_items': cart_items,
             'total_price': total_price,
         }
-        print("CONTEXT", context)
 
-        # Render the checkout template
         return render(request, 'checkout.html', context)
+
 
 
 

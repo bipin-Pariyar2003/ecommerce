@@ -29,3 +29,5 @@ admin.site.register(User, UserAdmin)
 admin.site.register(Category)
 
 admin.site.register(Product)
+
+admin.site.register(Order)
