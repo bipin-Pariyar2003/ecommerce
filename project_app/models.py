@@ -33,7 +33,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(max_length=200, unique=True)
     user_address = models.CharField(max_length=200)
     user_phone = models.CharField(max_length=15)
-    is_active = models.BooleanField(default=True)
+    is_active = models.BooleanField(default=False)
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
     # is_approved = models.BooleanField(default=False)
@@ -69,6 +69,7 @@ class Product(models.Model):
     product_discount=models.IntegerField()
     product_description=models.CharField(max_length=200)
     product_image=models.ImageField(upload_to="product")
+    product_quantity=models.IntegerField(default=0)
     
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
     def __str__(self):
@@ -101,6 +102,7 @@ class Order(models.Model):
     
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     items = models.ManyToManyField(CartItem)
+    # items = models.ForeignKey(CartItem, on_delete=models.CASCADE)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PLACED')
     
     total_price = models.DecimalField(max_digits=10, decimal_places=2)
@@ -120,5 +122,9 @@ class Order(models.Model):
 class OrderDetail(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE)
     item_name = models.CharField(max_length=100)
+    
+# class OrderItem(models.Model):
+#     order = models.ForeignKey(Order, related_name='items', on_delete=models.CASCADE)
+#     item_name = models.CharField(max_length=255)
 
     

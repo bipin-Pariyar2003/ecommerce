@@ -5,6 +5,7 @@ from django.contrib.auth import login, logout, authenticate, get_user_model
 from django.contrib.auth.decorators import login_required
 from django.contrib.admin.views.decorators import staff_member_required
 import re
+from django.db.models import Prefetch
 
 #Home page--------------------------------------------------------------------------
 def index(request):
@@ -59,11 +60,14 @@ def register(request):
             email=email,
             password=password,
             user_address=user_address,
-            user_phone=user_phone
+            user_phone=user_phone,
+            is_active=False
         )
         
-        messages.info(request, "Registered Successfully!!")
-        return redirect("/register/")
+        # messages.info(request, "Registered Successfully!!")
+        # return redirect("/register/")
+        messages.info(request, "Registration pending admin approval.")
+        return redirect("/login/")
     
     queryset= User.objects.all()
     context={'page':"Register", "register": queryset}
@@ -105,8 +109,10 @@ def add_to_cart(request, product_id):
         cart, created = Cart.objects.get_or_create(user=request.user)
         cart_item, created = CartItem.objects.get_or_create(cart=cart, product=product, user=request.user)
         if not created:
-            cart_item.quantity += 1
-            cart_item.save()
+            if cart_item.quantity > 1:  # Check if quantity is greater than 1
+                cart_item.quantity += 1
+                cart_item.save()
+
         messages.info(request, "Product Added to Cart")
     return redirect('/index/')
 
@@ -160,17 +166,24 @@ def checkout(request):
         # Create the order
         order = Order.objects.create(user=user, total_price=total_price)
 
-        # Add cart items to the order
-        order.items.add(*cart_items)
+        # Associate cart items with the order
+        order_items = []
+        for cart_item in cart_items:
+            order.items.add(cart_item)  # Add each cart item to the order
+            order_items.append(cart_item.product.product_name)  # Collect item names for logging or other purposes
 
         # Clear the user's cart
         cart_items.delete()
+
+        # Optionally, you can log the order items for tracking purposes
+        print(f"Order #{order.id} items: {', '.join(order_items)}")
+        print(f"Order {order_items}")
+        print(f"OrderItems {order.items}")
 
         messages.success(request, "Order placed successfully!")
         return redirect('thankyou')
 
     elif request.method == 'GET':
-        
         address = user.user_address
         phone_number = user.user_phone
         cart_items = CartItem.objects.filter(cart__user=user)
@@ -185,6 +198,62 @@ def checkout(request):
 
         return render(request, 'checkout.html', context)
 
+# def checkout(request):
+#     user = request.user  # Retrieve the current user from the request
+
+#     if request.method == 'POST':
+#         cart_items = CartItem.objects.filter(cart__user=user)
+#         print("Cart-Items: ", cart_items)
+#         total_price = sum(item.quantity * item.product.product_price for item in cart_items)
+        
+
+#         # # Create the order
+#         # order = Order.objects.create(user=user, total_price=total_price)
+
+#         # # Add cart items to the order
+#         # order.items.add(*cart_items)
+        
+#         # Create the order
+#         order = Order.objects.create(user=user, total_price=total_price)
+#         print("TYPE OF ORDER: ", type(order))
+#         print("TYPE OF ORDER-ITEMS: ", type(order.items))
+#         print("ORDER-ITEMS: ", order.items)
+
+#         # Save the order to get an ID assigned
+#         # order.save()
+
+#         # Now add each cart item to the order
+#         for cart_item in cart_items:
+#             print(f"CART ITEM: {cart_item}" )
+#             cart_item.save()
+#             order.items.add(cart_item)
+#             order.save()
+            
+#         # print("ORDERSSSS -----> ", order.items)
+#         print("ORDER ITEMS AFTER ADDING: ", order.items.all())
+
+#         # Clear the user's cart
+#         cart_items.delete()
+
+#         messages.success(request, "Order placed successfully!")
+#         return redirect('thankyou')
+
+#     elif request.method == 'GET':
+        
+#         address = user.user_address
+#         phone_number = user.user_phone
+#         cart_items = CartItem.objects.filter(cart__user=user)
+#         total_price = sum(item.quantity * item.product.product_price for item in cart_items)
+
+#         context = {
+#             'address': address,
+#             'phone_number': phone_number,
+#             'cart_items': cart_items,
+#             'total_price': total_price,
+#         }
+
+#         return render(request, 'checkout.html', context)
+
 
 #Thankyou
 def thankyou(request):
@@ -193,12 +262,21 @@ def thankyou(request):
 
 @login_required
 def view_orders(request):
-    orders = Order.objects.filter(user=request.user)
+    # orders = Order.objects.filter(user=request.user)
+    print("ORDER OBJECTS:   ", Order.objects.filter())
+    orders = Order.objects.filter(user=request.user).select_related('user').prefetch_related('items__product')
+    print('ORDERS-----------------: ', orders)
     order_details = []
     for order in orders:
+        print(f"ORDERS: {order.items}")
         items = order.items.all()  # Get all items associated with the order
+        # item_names = [item.product.product_name for item in items]  # Extract item names
+        print(f"ITEMS: {items}")
         item_names = [item.product.product_name for item in items]  # Extract item names
+        print(f"Order {order.id} items: {item_names}")  # Debugging line
         order_details.append({'order': order, 'item_names': item_names})
+        
+    # print("ORDER DETAILS:::::", order_details)
     return render(request, 'view_orders.html', {'order_details': order_details})
 
 
