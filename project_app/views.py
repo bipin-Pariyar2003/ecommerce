@@ -4,6 +4,7 @@ from django.contrib import messages
 from django.contrib.auth import login, logout, authenticate, get_user_model
 from django.contrib.auth.decorators import login_required
 from django.contrib.admin.views.decorators import staff_member_required
+import re
 
 #Home page--------------------------------------------------------------------------
 def index(request):
@@ -42,8 +43,16 @@ def register(request):
         if user.exists():
             messages.info(request, "Email Id already used.")
             return redirect("/register/")
-        # if not password.len()>=6:
-        #     messages.info(request, "Password length should be equal or greater than 6")
+        
+        if not len(password)>=6:
+            messages.info(request, "Password length should be equal or greater than 6")
+            return redirect("/register/")
+        
+        if not re.match(r'^(98|97)\d{8}$', user_phone):
+            messages.error(request, "Phone number must start with 98 or 97 and be 10 digits long.")
+            return redirect("/register/")
+        
+        
         
         User.objects.create_user(
             username=username,
